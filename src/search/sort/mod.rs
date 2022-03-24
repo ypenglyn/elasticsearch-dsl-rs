@@ -138,11 +138,17 @@ where
 /// Sorts search hits by other field values
 ///
 /// <https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#sort-search-results>
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Sort(KeyValuePair<SortField, SortInner>);
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Default, Clone, PartialEq, Serialize)]
 struct SortInner {
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    coordinates: Option<GeoPoint>,
+
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    unit: Option<String>,
+
     #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
     order: Option<SortOrder>,
 
@@ -151,6 +157,9 @@ struct SortInner {
 
     #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
     unmapped_type: Option<String>,
+
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    distance_type: Option<String>,
 
     #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
     missing: Option<SortMissing>,
@@ -186,6 +195,30 @@ impl Sort {
         self
     }
 
+    /// Distance type to compute.
+    ///
+    /// <https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_ignoring_unmapped_fields>
+    pub fn distance_type(mut self, distance_type: impl Into<String>) -> Self {
+        self.0.value.distance_type = Some(distance_type.into());
+        self
+    }
+
+    /// Set coordinates
+    ///
+    /// <https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_ignoring_unmapped_fields>
+    pub fn coordinates(mut self, coordinates: impl Into<GeoPoint>) -> Self {
+        self.0.value.coordinates = Some(coordinates.into());
+        self
+    }
+
+    /// Set unit
+    ///
+    /// <https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_ignoring_unmapped_fields>
+    pub fn unit(mut self, unit: impl Into<String>) -> Self {
+        self.0.value.unit = Some(unit.into());
+        self
+    }
+
     /// The missing parameter specifies how docs which are missing the sort field should be treated
     ///
     /// <https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_missing_values>
@@ -214,9 +247,18 @@ mod tests {
                 .order(SortOrder::Asc)
                 .mode(SortMode::Max)
                 .unmapped_type("long")
+                .distance_type("arc")
+                .unit("km")
+                .coordinates(GeoPoint::Coordinates {
+                    latitude: 40.12,
+                    longitude: -71.34,
+                },)
                 .missing("miss"),
             json!({
                 "test": {
+                    "coordinates": [-71.34, 40.12],
+                    "unit": "km",
+                    "distance_type": "arc",
                     "order": "asc",
                     "mode": "max",
                     "unmapped_type": "long",
