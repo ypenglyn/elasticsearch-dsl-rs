@@ -28,11 +28,11 @@ pub enum GeoPoint {
     Coordinates {
         /// Latitudes measure an angle up from the equator
         /// (latitudes to the south are negative).
-        latitude: f32,
+        latitude: f64,
 
         /// A longitude is an angle from the prime meridian,
         /// measured to the east (longitudes to the west are negative)
-        longitude: f32,
+        longitude: f64,
     },
     /// Geo-point expressed as a geohash
     Geohash(String),
@@ -40,7 +40,7 @@ pub enum GeoPoint {
 
 impl GeoPoint {
     /// Creates an instance of [GeoPoint](GeoPoint)
-    pub fn coordinates(latitude: f32, longitude: f32) -> Self {
+    pub fn coordinates(latitude: f64, longitude: f64) -> Self {
         Self::Coordinates {
             latitude,
             longitude,
@@ -74,7 +74,7 @@ mod tests {
 
     #[test]
     fn serializes_coordinates_successfully() {
-        let geo_point = GeoPoint::coordinates(-40f32, -70f32);
+        let geo_point = GeoPoint::coordinates(-40f64, -70f64);
 
         let result = serde_json::to_string(&geo_point).unwrap();
 
