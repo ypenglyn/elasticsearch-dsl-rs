@@ -4,13 +4,13 @@ use std::{fmt::Display, str::FromStr};
 /// Represents a point in two dimensional space
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct GeoCoordinate {
-    latitude: f32,
-    longitude: f32,
+    latitude: f64,
+    longitude: f64,
 }
 
 impl GeoCoordinate {
     /// Creates an instance of [`GeoCoordinate`]
-    pub fn new(latitude: f32, longitude: f32) -> Self {
+    pub fn new(latitude: f64, longitude: f64) -> Self {
         Self {
             latitude,
             longitude,
@@ -33,8 +33,8 @@ impl Serialize for GeoCoordinate {
     }
 }
 
-impl From<[f32; 2]> for GeoCoordinate {
-    fn from(value: [f32; 2]) -> Self {
+impl From<[f64; 2]> for GeoCoordinate {
+    fn from(value: [f64; 2]) -> Self {
         Self {
             latitude: value[1],
             longitude: value[0],
@@ -42,8 +42,8 @@ impl From<[f32; 2]> for GeoCoordinate {
     }
 }
 
-impl From<(f32, f32)> for GeoCoordinate {
-    fn from(value: (f32, f32)) -> Self {
+impl From<(f64, f64)> for GeoCoordinate {
+    fn from(value: (f64, f64)) -> Self {
         Self {
             latitude: value.1,
             longitude: value.0,
