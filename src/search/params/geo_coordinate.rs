@@ -24,6 +24,7 @@ impl Display for GeoCoordinate {
     }
 }
 
+
 impl Serialize for GeoCoordinate {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
