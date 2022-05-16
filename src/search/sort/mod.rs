@@ -252,7 +252,7 @@ mod tests {
                 .coordinates(GeoPoint::Coordinates {
                     latitude: 40.12,
                     longitude: -71.34,
-                },)
+                })
                 .missing("miss"),
             json!({
                 "test": {

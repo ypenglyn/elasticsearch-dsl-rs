@@ -110,12 +110,18 @@ function!(Function {
     DecayU32(Decay<u32>),
     DecayU64(Decay<u64>),
     Script(Script),
+    FilterWeight(FilterWeight),
 });
 
 impl Function {
     /// Creates an instance of [Weight](Weight)
     pub fn weight(weight: f32) -> Weight {
         Weight::new(weight)
+    }
+
+    /// Creates an instance of [FilterWeight](FilterWeight)
+    pub fn filter_weight(weight: f32) -> FilterWeight {
+        FilterWeight::new(weight)
     }
 
     /// Creates an instance of [RandomScore](RandomScore)
@@ -172,6 +178,55 @@ impl Weight {
     /// Creates an instance of [Weight](Weight)
     pub fn new(weight: f32) -> Self {
         Self { weight }
+    }
+}
+
+/// The `weight` score allows you to multiply the score by the provided weight.
+///
+/// This can sometimes be desired since boost value set on specific queries gets normalized, while
+/// for this score function it does not
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct FilterWeight {
+    filter: FilterWeightInner,
+    weight: f32,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Default)]
+struct FilterWeightInner {
+    #[serde(rename = "bool")]
+    inner: Inner,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Default)]
+struct Inner {
+    #[serde(skip_serializing_if = "ShouldSkip::should_skip")]
+    should: Queries,
+}
+
+impl FilterWeightInner {
+    pub(crate) fn default() -> Self {
+        FilterWeightInner {
+            inner: Inner::default(),
+        }
+    }
+}
+
+impl FilterWeight {
+    /// Creates an instance of [FilterWeight](FilterWeight)
+    pub fn new(weight: f32) -> Self {
+        Self {
+            filter: FilterWeightInner::default(),
+            weight,
+        }
+    }
+
+    /// The clause (query) should appear in the matching document.
+    pub fn should<Q>(mut self, queries: Q) -> Self
+    where
+        Q: Into<Queries>,
+    {
+        self.filter.inner.should.extend(queries);
+        self
     }
 }
 
@@ -472,7 +527,6 @@ impl<T: Origin> Decay<T> {
     }
 }
 
-
 // impl<T: Origin> Serialize for Decay<T> {
 //     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 //     where
@@ -559,6 +613,34 @@ impl Script {
     pub fn params(mut self, params: serde_json::Value) -> Self {
         self.script_score.script.params = Some(params);
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::queries::Query;
+
+    #[test]
+    fn test_filter_weight() {
+        let mut queries: Queries = Queries::default();
+        queries.extend(Query::term("category", "トラベル>駅"));
+
+        assert_serialize(
+            FilterWeight::new(2.0_f32).should(queries),
+            json!({
+              "filter": {
+                "bool": {
+                  "should": [{
+                    "term": {
+                      "category": {"value": "トラベル>駅"}
+                    }
+                  }]
+                }
+              },
+              "weight": 2.0
+            }),
+        );
     }
 }
 
